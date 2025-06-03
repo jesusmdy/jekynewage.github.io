@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
+from faker import Faker
+import random
 
 app = Flask(__name__)
+fake = Faker()
 
 @app.route('/')
 def hello_world():
@@ -17,29 +20,32 @@ def compare_flights():
     flight_data = get_mock_flight_data(source_city, destination_city)
     if flight_data:
         return jsonify({"flights": flight_data}), 200
-    else:
+    # Since we always generate data, the "else" part for 404 might not be hit
+    # unless get_mock_flight_data explicitly returns None or an empty list.
+    # For this task, it will always generate 1 to 5 flights.
+    else: # This case should ideally not be reached if get_mock_flight_data always returns data.
         return jsonify({"message": f"No flights found from {source_city} to {destination_city}"}), 404
-
-MOCK_FLIGHT_DATA = {
-    "NYC-LON": [
-        {"airline": "Airline A", "price": 500, "duration": "7h"},
-        {"airline": "Airline B", "price": 550, "duration": "7h 30m"}
-    ],
-    "LAX-TOK": [
-        {"airline": "Airline C", "price": 800, "duration": "11h"},
-        {"airline": "Airline D", "price": 820, "duration": "11h 15m"}
-    ],
-    "CHI-PAR": [
-        {"airline": "Airline E", "price": 600, "duration": "8h"},
-    ]
-}
 
 def get_mock_flight_data(source_city, destination_city):
     """
-    Retrieves mock flight data for a given source and destination city.
+    Generates dynamic mock flight data for a given source and destination city.
     """
-    key = f"{source_city}-{destination_city}"
-    return MOCK_FLIGHT_DATA.get(key)
+    flights = []
+    num_flights = random.randint(1, 5)
+
+    for _ in range(num_flights):
+        airline = fake.company()
+        price = random.randint(200, 1200)
+        hours = random.randint(1, 12)
+        minutes = random.randint(0, 59)
+        duration = f"{hours}h {minutes}m"
+        
+        flights.append({
+            "airline": airline,
+            "price": price,
+            "duration": duration
+        })
+    return flights
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
